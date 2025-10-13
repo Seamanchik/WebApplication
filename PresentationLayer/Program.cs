@@ -1,10 +1,9 @@
 using DataAccessLayer.DI;
 using BusinessLayer.DI;
-using DataAccessLayer.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddData();
+builder.Services.AddData(builder.Configuration);
 builder.Services.AddBusinessLayer();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
