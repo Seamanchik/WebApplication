@@ -9,5 +9,6 @@ namespace DataAccessLayer.Interface
         Task<ICollection<Student>?> GetAllStudentsAsync(CancellationToken cancellationToken = default);
         Task UpdateStudentAsync(Student student, CancellationToken cancellationToken = default);
         Task DeleteStudentAsync(Student student, CancellationToken cancellationToken = default);
+        Task<bool> StudentExistsByNameAsync(string name, string surname, CancellationToken cancellationToken = default);
     }
 }

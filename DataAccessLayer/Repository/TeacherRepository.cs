@@ -30,5 +30,8 @@ namespace DataAccessLayer.Repository
             webAppDbContext.Teachers.Remove(teacher!);
             await webAppDbContext.SaveChangesAsync(cancellationToken);
         }
+
+        public async Task<bool> TeacherExistsByNameAsync(string name, string surname, CancellationToken cancellationToken = default) =>
+            await webAppDbContext.Teachers.AnyAsync(t => t.Name == name && t.SurName == surname, cancellationToken);
     }
 }

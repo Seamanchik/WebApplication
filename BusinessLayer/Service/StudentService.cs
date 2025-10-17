@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace BusinessLayer.Service
 {
-    internal class StudentService(IStudentRepository studentRepository, ICourseRepository courseRepository) : IStudentService
+    internal class StudentService(IStudentRepository studentRepository) : IStudentService
     {
         readonly JsonSerializerOptions options = new()
         {
@@ -17,21 +17,24 @@ namespace BusinessLayer.Service
 
         public async Task<string?> GetAllStudentsAsync(CancellationToken cancellationToken = default)
         {
-            ICollection<Student>? students = await studentRepository.GetAllStudentsAsync(cancellationToken);
+            var students = await studentRepository.GetAllStudentsAsync(cancellationToken);
 
             return JsonSerializer.Serialize(students!.Select(MapToDto), options);
         }
 
         public async Task<string?> GetStudentAsync(int id, CancellationToken cancellationToken = default)
         {
-            Student? student = await studentRepository.GetStudentAsync(id, cancellationToken);
+            var student = await studentRepository.GetStudentAsync(id, cancellationToken);
 
-            return student is null ? throw new Exception("Student not found.") : JsonSerializer.Serialize(MapToDto(student), options);
+            return student is null ? throw new Exception("Студент не найден.") : JsonSerializer.Serialize(MapToDto(student), options);
         }
 
         public async Task AddStudentAsync(CreateStudentDTO createStudentDTO, CancellationToken cancellationToken = default)
         {
-            Student student = new Student
+            if (await studentRepository.StudentExistsByNameAsync(createStudentDTO.Name, createStudentDTO.Surname, cancellationToken))
+                throw new Exception("Студент с таким именем и фамилией уже существует.");
+
+            Student student = new()
             {
                 Name = createStudentDTO.Name,
                 Surname = createStudentDTO.Surname
@@ -42,7 +45,7 @@ namespace BusinessLayer.Service
 
         public async Task UpdateStudentAsync(UpdateStudentDTO updateStudentDTO, CancellationToken cancellationToken = default)
         {
-            Student? student = await studentRepository.GetStudentAsync(updateStudentDTO.Id, cancellationToken) ?? throw new Exception("Student not found.");
+            var student = await studentRepository.GetStudentAsync(updateStudentDTO.Id, cancellationToken) ?? throw new Exception("Студент не найден.");
             
             student.Name = updateStudentDTO.Name;
             student.Surname = updateStudentDTO.Surname;
@@ -52,7 +55,7 @@ namespace BusinessLayer.Service
 
         public async Task DeleteStudentAsync(int id, CancellationToken cancellationToken = default)
         {
-            Student? student = await studentRepository.GetStudentAsync(id, cancellationToken) ?? throw new Exception("Student not found.");
+            var student = await studentRepository.GetStudentAsync(id, cancellationToken) ?? throw new Exception("Студент не найден.");
             
             await studentRepository.DeleteStudentAsync(student, cancellationToken);
         }

@@ -11,14 +11,9 @@ namespace DataAccessLayer.Repository
             await webAppDbContext.Courses.Include(c => c.Teacher).Include(c => c.Students).ToListAsync(cancellationToken);
 
         public async Task<Course?> GetCourseAsync(int id, CancellationToken cancellationToken = default) =>
-            await webAppDbContext.Courses.Include(c => c.Teacher).Include(c => c.Students).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
-
-        public async Task<Course?> GetCourseWithIncludeAsync(int id, CancellationToken cancellationToken = default)
-        {
-            return await webAppDbContext.Courses.Include(c => c.Teacher)
-                .Include(c => c.Students)
-                .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
-        }
+            await webAppDbContext.Courses.Include(c => c.Teacher)
+            .Include(c => c.Students)
+            .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
 
         public async Task AddCourseAsync(Course course, CancellationToken cancellationToken = default)
         {

@@ -1,45 +1,49 @@
 ﻿using BusinessLayer.Interface;
 using DTO.DTO;
 using Microsoft.AspNetCore.Mvc;
+using FluentValidation;
 
 namespace PresentationLayer.Controllers
 {
     [ApiController]
     [Route("course")]
-    public class CourseController(ICourseService courseService) : Controller
+    public class CourseController(ICourseService courseService, IValidator<CreateCourseDTO> createValidator, IValidator<UpdateCourseDTO> updateValidator, IValidator<CourseStudentDTO> courseStudentValidator) : Controller
     {
         [HttpGet]
         public async Task<IActionResult> GetAllCoursesAsync()
         {
-            string? result = await courseService.GetAllCoursesAsync();
+            var result = await courseService.GetAllCoursesAsync();
             return Ok(result);
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetCourseAsync([FromRoute]int id)
         {
-            string? result = await courseService.GetCourseAsync(id);
+            var result = await courseService.GetCourseAsync(id);
             return Ok(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddCourseAsync(CreateCourseDTO createCourseDTO)
         {
+            createValidator.ValidateAndThrow(createCourseDTO);
             await courseService.AddCourseAsync(createCourseDTO);
             return NoContent();
         }
      
-        [HttpPut("{id:int}")]
+        [HttpPut]
         public async Task<IActionResult> UpdateCourseAsync(UpdateCourseDTO updateCourseDTO)
         {
+            updateValidator.ValidateAndThrow(updateCourseDTO);
             await courseService.UpdateCourseAsync(updateCourseDTO);
             return NoContent();
         }
 
-        [HttpPut("student/{id:int}")]
-        public async Task<IActionResult> AddStudentOnCourse([FromRoute]int id, int studentId)
+        [HttpPut("student")]
+        public async Task<IActionResult> AddStudentOnCourse(CourseStudentDTO courseStudentDTO)
         {
-            await courseService.AddStudentOnCourse(id, studentId);
+            courseStudentValidator.ValidateAndThrow(courseStudentDTO);
+            await courseService.AddStudentOnCourse(courseStudentDTO);
             return NoContent();
         }
 

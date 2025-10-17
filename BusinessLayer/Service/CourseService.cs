@@ -7,8 +7,7 @@ using System.Text.Json;
 
 namespace BusinessLayer.Service
 {
-    internal class CourseService(ICourseRepository courseRepository, ITeacherRepository teacherRepository,
-                                 IStudentRepository studentRepository) : ICourseService
+    internal class CourseService(ICourseRepository courseRepository, IStudentRepository studentRepository) : ICourseService
 {
 
         readonly JsonSerializerOptions options = new()
@@ -28,15 +27,15 @@ namespace BusinessLayer.Service
         {
             var course = await courseRepository.GetCourseAsync(id, cancellationToken);
 
-            return course is null ? throw new Exception("Course not found.") : JsonSerializer.Serialize(MapToDto(course), options);
+            return course is null ? throw new Exception("Курс не найден.") : JsonSerializer.Serialize(MapToDto(course), options);
         }
 
         public async Task AddCourseAsync(CreateCourseDTO createCourseDTO, CancellationToken cancellationToken = default)
         {
             if (await courseRepository.CourseExistsAsync(createCourseDTO.Name, cancellationToken))
-                throw new Exception("Course already exists.");
+                throw new Exception("Такой курс уже существует.");
 
-            Course course = new Course
+            Course course = new()
             {
                 Name = createCourseDTO.Name,
                 Description = createCourseDTO.Description,
@@ -48,7 +47,7 @@ namespace BusinessLayer.Service
 
         public async Task UpdateCourseAsync(UpdateCourseDTO updateCourseDTO, CancellationToken cancellationToken = default)
         {
-            Course? course = await courseRepository.GetCourseAsync(updateCourseDTO.Id, cancellationToken) ?? throw new Exception("Course not found.");
+            var course = await courseRepository.GetCourseAsync(updateCourseDTO.Id, cancellationToken) ?? throw new Exception("Курс не найден.");
             course.Name = updateCourseDTO.Name;
             course.Description = updateCourseDTO.Description;
             course.TeacherId = updateCourseDTO.TeacherId;
@@ -56,31 +55,21 @@ namespace BusinessLayer.Service
             await courseRepository.UpdateCourseAsync(course, cancellationToken);
         }
 
-        public async Task UpdateTeacherOnCourseAsync(int courseId, int teacherId, CancellationToken cancellationToken = default)
+        public async Task AddStudentOnCourse(CourseStudentDTO courseStudentDTO, CancellationToken cancellationToken = default)
         {
-            Teacher? teacher = await teacherRepository.GetTeacherAsync(teacherId, cancellationToken) ?? throw new Exception("Teacher not found.");
-            Course? course = await courseRepository.GetCourseAsync(courseId, cancellationToken) ?? throw new Exception("Course not found.");
+            var student = await studentRepository.GetStudentAsync(courseStudentDTO.StudentId, cancellationToken) ?? throw new Exception("Студент не найден.");
+            var course = await courseRepository.GetCourseAsync(courseStudentDTO.CourseId, cancellationToken) ?? throw new Exception("Курс не найден.");
             
-            course.Teacher = teacher;
-            course.TeacherId = teacher.Id;
-            await courseRepository.UpdateCourseAsync(course, cancellationToken);
-        }
+            if (course.Students.Contains(student))
+                throw new Exception("Студент уже зачислен на курс.");
 
-        public async Task AddStudentOnCourse(int courseId, int studentId, CancellationToken cancellationToken = default)
-        {
-            Student? student = await studentRepository.GetStudentAsync(studentId, cancellationToken) ?? throw new Exception("Student not found.");
-            Course? course = await courseRepository.GetCourseWithIncludeAsync(courseId, cancellationToken) ?? throw new Exception("Course not found.");
-            
-            if (!course.Students.Contains(student))
-            {
-                course.Students.Add(student);
-                await courseRepository.UpdateCourseAsync(course, cancellationToken);
-            }
+            course.Students.Add(student);
+            await courseRepository.UpdateCourseAsync(course, cancellationToken);
         }
 
         public async Task DeleteCourseAsync(int id, CancellationToken cancellationToken = default)
         {
-            Course? course = await courseRepository.GetCourseAsync(id, cancellationToken) ?? throw new Exception("Course not found.");
+            var course = await courseRepository.GetCourseAsync(id, cancellationToken) ?? throw new Exception("Курс не найден.");
             
             await courseRepository.DeleteCourseAsync(course, cancellationToken);
         }
